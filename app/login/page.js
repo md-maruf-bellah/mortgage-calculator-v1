@@ -1,16 +1,18 @@
 "use client";
-import { useState, useEffect } from "react";
+
+import { Suspense, useState, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Home, Eye, EyeOff, LogIn, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
 
-export default function LoginPage() {
+function LoginContent() {
   const { login, user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/";
+
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPass, setShowPass] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -18,17 +20,22 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!loading && user) router.replace(redirect);
-  }, [user, loading, redirect]);
+  }, [user, loading, redirect, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSubmitting(true);
+
     const data = await login(form.email, form.password);
+
     if (data.success) {
       toast.success(`Welcome back, ${data.user.name}!`);
       router.replace(redirect);
-    } else setError(data.error || "Login failed");
+    } else {
+      setError(data.error || "Login failed");
+    }
+
     setSubmitting(false);
   };
 
@@ -44,6 +51,7 @@ export default function LoginPage() {
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl" />
       </div>
+
       <div className="w-full max-w-md relative">
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-3 mb-4">
@@ -62,6 +70,7 @@ export default function LoginPage() {
               </div>
             </div>
           </div>
+
           <h1
             className="text-xl font-bold text-slate-200"
             style={{ fontFamily: "Syne, sans-serif" }}
@@ -69,6 +78,7 @@ export default function LoginPage() {
             Sign in to your account
           </h1>
         </div>
+
         <div className="glass-card p-8">
           {error && (
             <div className="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20 mb-6">
@@ -76,6 +86,7 @@ export default function LoginPage() {
               <p className="text-sm text-red-300">{error}</p>
             </div>
           )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="input-label">Email Address</label>
@@ -91,6 +102,7 @@ export default function LoginPage() {
                 autoComplete="email"
               />
             </div>
+
             <div>
               <label className="input-label">Password</label>
               <div className="relative">
@@ -114,6 +126,7 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
+
             <button
               type="submit"
               disabled={submitting}
@@ -127,6 +140,7 @@ export default function LoginPage() {
               {submitting ? "Signing in..." : "Sign In"}
             </button>
           </form>
+
           <div className="mt-6 pt-6 border-t border-white/[0.06] text-center">
             <p className="text-sm text-slate-500">
               Don&apos;t have an account?{" "}
@@ -139,6 +153,7 @@ export default function LoginPage() {
             </p>
           </div>
         </div>
+
         <div className="mt-4 glass-card p-3 text-center">
           <p className="text-xs text-slate-600">
             First registered user automatically becomes{" "}
@@ -147,5 +162,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="p-10 text-center">Loading...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
